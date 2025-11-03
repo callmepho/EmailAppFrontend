@@ -20,6 +20,9 @@ import {
 import { useForm } from "react-hook-form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { useNavigate } from "react-router";
+import { useLoginUser, useRegisterUser } from "@/query/useUserQueries";
+import { SpinLoader } from "../ui/spinLoader";
 
 const Login = () => {
   return (
@@ -40,9 +43,7 @@ const Login = () => {
             <CardContent>
               <LoginForm />
             </CardContent>
-            <CardFooter>
-              <Button>Login</Button>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="signup">
@@ -56,9 +57,7 @@ const Login = () => {
             <CardContent>
               <SignupForm />
             </CardContent>
-            <CardFooter>
-              <Button>Sign Up</Button>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
@@ -82,6 +81,9 @@ const signupFormSchema = z
   });
 
 const LoginForm = () => {
+  const navigate = useNavigate();
+
+  const { mutate: login, isPending } = useLoginUser();
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -90,8 +92,17 @@ const LoginForm = () => {
     },
   });
 
-  const onFormSubmit = (data: z.infer<typeof loginFormSchema>) => {
+  const onFormSubmit = async (data: z.infer<typeof loginFormSchema>) => {
     // GET login
+    login(data, {
+      onSuccess: (userToken) => {
+        localStorage.setItem("token", userToken.token);
+        navigate("/email");
+      },
+      onError: (e) => {
+        form.setError("email", { message: e.message.split(":")[0] });
+      },
+    });
   };
 
   return (
@@ -123,12 +134,21 @@ const LoginForm = () => {
             </FormItem>
           )}
         />
+        {isPending ? (
+          <SpinLoader />
+        ) : (
+          <Button type="submit" className="flex">
+            Login
+          </Button>
+        )}
       </form>
     </Form>
   );
 };
 
 const SignupForm = () => {
+  const navigate = useNavigate();
+  const { mutate: register, isPending } = useRegisterUser();
   const form = useForm<z.infer<typeof signupFormSchema>>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
@@ -138,8 +158,17 @@ const SignupForm = () => {
     },
   });
 
-  const onFormSubmit = (data: z.infer<typeof signupFormSchema>) => {
+  const onFormSubmit = async (data: z.infer<typeof signupFormSchema>) => {
     // Post create new user
+    register(data, {
+      onSuccess: (userToken) => {
+        localStorage.setItem("token", userToken.token);
+        navigate("/email");
+      },
+      onError: (e) => {
+        form.setError("email", { message: e.message.split(":")[0] });
+      },
+    });
   };
 
   return (
@@ -184,6 +213,13 @@ const SignupForm = () => {
             </FormItem>
           )}
         />
+        {isPending ? (
+          <SpinLoader />
+        ) : (
+          <Button type="submit" className="flex">
+            Sign Up
+          </Button>
+        )}
       </form>
     </Form>
   );

@@ -1,7 +1,7 @@
 import { gql } from "graphql-request";
-import { graphqlClient } from "./graphqlClient";
+import { authClient } from "./graphqlClient";
 
-const client = graphqlClient();
+const client = authClient();
 
 const GET_ALL_EMAILS = gql`
   query {
